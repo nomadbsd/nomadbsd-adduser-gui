@@ -26,6 +26,7 @@ use utf8;
 use strict;
 use POSIX ":sys_wait_h";
 use Time::HiRes "usleep";
+use XML::LibXML;
 
 binmode(STDOUT, ":utf8");
 binmode(STDERR, ":utf8");
@@ -34,6 +35,7 @@ my $dummy;
 my $vtkbdlist		= "/usr/share/vt/keymaps/INDEX.keymaps";
 my $path_datadir	= "/usr/share/nomadbsd";
 my $path_dotfiles	= "$path_datadir/home.nomad.tgz";
+my $path_xkbrules_xorg_xml = "/usr/local/share/X11/xkb/rules/xorg.xml";
 my ($xlayoutstr, $xvariantstr);
 
 my $cfg_name;
@@ -48,6 +50,9 @@ my $cfg_editor;
 my $cfg_gui_editor;
 my $cfg_email_client;
 my $cfg_browser;
+my $cfg_kbdlayout;
+my $cfg_kbdvariant;
+my @cfg_xkbdlayouts;
 ##############################################################################
 # This section is for defining data.
 #
@@ -339,6 +344,48 @@ sub find_desktop_file {
 	return "";
 }
 
+sub xkb_layout_to_ibus_engine {
+	my ($layout, $variant) = @_;
+	my $filename = $path_xkbrules_xorg_xml;
+	my $dom = XML::LibXML->load_xml(location => $filename);
+	my $layout_node_name = '/xkbConfigRegistry/layoutList/layout';
+	my $iso_code_node_name = './configItem/languageList/iso639Id';
+	my $variant_node_name = './variantList/variant/configItem';
+
+	foreach my $layout_node ($dom->findnodes($layout_node_name)) {
+		my $name = $layout_node->findvalue('./configItem/name');
+		next if ($name ne $_[0]);
+		my $iso_code = $layout_node->findvalue($iso_code_node_name);
+		return "xkb:$layout:$variant:$iso_code";
+	}
+	return "xkb:$layout:$variant:";
+}
+
+sub configure_ibus {
+	my $ibus_ini = "/home/${cfg_username}/.config/ibus.ini";
+	my ($engines, $output);
+
+	open(my $fh, $ibus_ini) or bail("Couldn't open $ibus_ini");
+	my @ibus_cfg = <$fh>;
+	close($fh);
+
+	$engines = xkb_layout_to_ibus_engine($cfg_kbdlayout, $cfg_kbdvariant);
+	$engines = "'$engines'";
+	for (my $l = 0; $l < @cfg_xkbdlayouts; $l++) {
+		my @lv = split(/\t/, $cfg_xkbdlayouts[$l]);
+		my $engine_str = xkb_layout_to_ibus_engine($lv[0], $lv[1]);
+		$engines .= ", ";
+		$engines .= "'$engine_str'";
+	}
+	foreach (@ibus_cfg) {
+		$_ =~ s/\@ENGINES\@/$engines/g;
+		$output .= $_;
+	}
+	open(my $fh, ">$ibus_ini") or bail("Couldn't open $ibus_ini");
+	print $fh $output;
+	close($fh);
+}
+
 sub desktopsettings {
 	my $appsdir		= "/usr/local/share/applications";
 	my $usrappsdir	= "/home/$cfg_username/.local/share/applications";
@@ -430,6 +477,16 @@ sub desktopsettings {
 			$xvariantstr = $1;
 		}
 	}
+	my @xkbdlayouts = split(/,/, $xlayoutstr);
+	my @xkbdvariants = split(/,/, $xvariantstr);
+
+	$cfg_kbdlayout  = $xkbdlayouts[0];
+	$cfg_kbdvariant = $xkbdvariants[0];
+
+	for (my $i = 0; $i < @xkbdlayouts; $i++) {
+		$cfg_xkbdlayouts[$i] = "$xkbdlayouts[$i]\t$xkbdvariants[$i]"
+	}
+	configure_ibus();
 	open(my $fh, ">$path_xkbdmap") or bail("Couldn't create $path_xkbdmap");
 	print $fh qq(setxkbmap -rules evdev -layout \"$xlayoutstr\" -variant \"$xvariantstr\");
 	close($fh);
