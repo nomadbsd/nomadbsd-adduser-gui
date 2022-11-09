@@ -47,7 +47,6 @@ my $cfg_shell;
 my $cfg_groups = "wheel,operator,video,games,cups,webcamd";
 my $cfg_password;
 my $cfg_editor;
-my $cfg_gui_editor;
 my $cfg_email_client;
 my $cfg_browser;
 my $cfg_kbdlayout;
@@ -90,12 +89,6 @@ my @editor_list = (
 	'micro		Modern and intuitive terminal-based text editor',
 	'nvim		Next-generation Vim (Neovim)',
 	'emacs		GNU editing macros'
-);
-
-my @gui_editor_list = (
-	'leafpad	GTK+ based simple text editor',
-	'gvim		Vim with a GTK+ frontend',
-	'vim		Vim running in a X terminal'
 );
 
 my @browser_list = (
@@ -400,14 +393,13 @@ sub desktopsettings {
 
 	my @apps = (
 		'home', 'sakura', $cfg_browser, $cfg_email_client,
-		'libreoffice-startcenter', 'galculator', $cfg_gui_editor, 'geany',
+		'libreoffice-startcenter', 'galculator', 'geany',
 		'mpv', 'gimp', 'octopkg', 'leave'
 	);
 	my %default_apps = (
 		BROWSER		=> $cfg_browser,
 		FILEMANAGER	=> $cfg_fm,
 		EMAILCLIENT	=> $cfg_email_client,
-		GUIEDITOR	=> $cfg_gui_editor
 	);
 	open(my $fh, ">>/home/$cfg_username/.login_conf")
 		or bail("Couldn't open $_");
@@ -518,7 +510,6 @@ sub commit {
 		$cfg_shell		   = $1 if (/^cfg_shell\s*=\s*(.*)/);
 		$cfg_password	   = $1 if (/^cfg_password\s*=\s*(.*)/);
 		$cfg_editor		   = $1 if (/^cfg_editor\s*=\s*(.*)/);
-		$cfg_gui_editor	   = $1 if (/^cfg_gui_editor\s*=\s*(.*)/);
 		$cfg_email_client  = $1 if (/^cfg_email_client\s*=\s*(.*)/);
 		$cfg_browser	   = $1 if (/^cfg_browser\s*=\s*(.*)/);
 	}
@@ -586,7 +577,6 @@ sub usage {
 		  "locales        Print list of locales\n" .
 		  "filemanagers   Print a list of file managers\n" .
 		  "editors        Print a list of editors\n" .
-		  "guieditors     Print a list of GUI editors\n" .
 		  "commit         Read configuration from stdin, and apply it\n";
 	exit 0;
 }
@@ -688,10 +678,6 @@ while (@ARGV) {
 	} elsif ($ARGV[0] eq "editors") {
 		remove_not_installed(\@editor_list);
 		print_array_data(\@editor_list);
-		exit 0;
-	} elsif ($ARGV[0] eq "guieditors") {
-		remove_not_installed(\@gui_editor_list);
-		print_array_data(\@gui_editor_list);
 		exit 0;
 	} elsif ($ARGV[0] eq "filemanagers") {
 		remove_not_installed(\@file_manager_list);
