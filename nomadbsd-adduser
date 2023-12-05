@@ -41,7 +41,6 @@ my ($xlayoutstr, $xvariantstr);
 my $cfg_name;
 my $cfg_username;
 my $cfg_class;
-my $cfg_fm;
 my $cfg_locale;
 my $cfg_shell;
 my $cfg_groups = "wheel,operator,video,games,cups,webcamd";
@@ -56,21 +55,6 @@ my @cfg_xkbdlayouts;
 # This section is for defining data.
 #
 # 
-my @file_manager_list = (
-	'Thunar		Xfce file manager',
-	'pcmanfm	PCMan file manager',
-	'dolphin	KDE filemanager dolphin',
-	'nautilus	File manager for the GNOME desktop',
-	'konqueror	KDE system log application',
-	'krusader	Twin panel file manager for KDE, like midnight or norton commander',
-	'nemo		Twin panel file manager for KDE, like midnight or norton commander',
-	'xfe		Fast MS-Explorer like file manager for X',
-	'emelfm2	Gtk2+ port of emelfm, a fast graphical filemanager',
-	'gentoo		Gtk+ based, file manager inspired by DirectoryOpus',
-	'caja		File manager for the MATE desktop',
-	'doublecmd	Total Commander like file manager for the X Window System'
-);
-
 my @shell_list = (
 	'fish		The friendly interactive shell',
 	'zsh		The Z shell',
@@ -222,8 +206,8 @@ sub remove_not_installed {
 	my @list;
 	foreach (@$ref) {
 		if (/(\S+)\t+(.+)/) {
-				my $prog = $1;
-				my $prog_lc = lc($prog);
+			my $prog = $1;
+			my $prog_lc = lc($prog);
 			if (system("which $prog >/dev/null 2>&1") == 0 ||
 			    system("which $prog_lc >/dev/null 2>&1") == 0) {
 				push @list, "$1\t$2";
@@ -385,39 +369,21 @@ sub desktopsettings {
 	my $mimelist	= "/home/$cfg_username/.config/mimeapps.list";
 	my $dsbmc_cfg	= "/home/$cfg_username/.config/DSB/dsbmc/config";
 	my $autostart	= "/home/$cfg_username/.config/DSB/autostart.sh";
-	my $xinitrc		= "/home/$cfg_username/.xinitrc";
 	my $plank_ini	= "/home/$cfg_username/.config/plank.ini";
 	my $plank_launcher_dir	= "/home/$cfg_username/.config/plank/dock1/launchers";
 	my $logincfg_rec = "me:\\\n\t:setenv=EDITOR=$cfg_editor:";
-	my $path_xkbdmap = "/home/$cfg_username/.config/xkbdmap.sh";
 
 	my @apps = (
-		'home', 'sakura', $cfg_browser, $cfg_email_client,
-		'libreoffice-startcenter', 'galculator', 'geany',
-		'mpv', 'gimp', 'octopkg', 'leave'
+		'sakura', $cfg_browser, $cfg_email_client,
+		'galculator', 'geany', 'mpv', 'gimp', 'octopkg'
 	);
 	my %default_apps = (
 		BROWSER		=> $cfg_browser,
-		FILEMANAGER	=> $cfg_fm,
-		EMAILCLIENT	=> $cfg_email_client,
+		EMAILCLIENT	=> $cfg_email_client
 	);
 	open(my $fh, ">>/home/$cfg_username/.login_conf")
 		or bail("Couldn't open $_");
 	print $fh $logincfg_rec;
-	close($fh);
-
-	open(my $fh, $xinitrc) or bail("Couldn't open $xinitrc");
-	my @xinit = <$fh>;
-	close($fh);
-	open(my $fh, ">$xinitrc") or bail("Couldn't open $xinitrc");
-	foreach (@xinit) {
-		if (/#!/) {
-			print $fh "$_";
-			print $fh "export EDITOR=$cfg_editor\n";
-		} else {
-			print $fh "$_";
-		}
-	}
 	close($fh);
 
 	# Create "plank" dock items for filemanager, gimp, vlc, terminal, etc.
@@ -479,15 +445,6 @@ sub desktopsettings {
 		$cfg_xkbdlayouts[$i] = "$xkbdlayouts[$i]\t$xkbdvariants[$i]"
 	}
 	configure_ibus();
-	open(my $fh, ">$path_xkbdmap") or bail("Couldn't create $path_xkbdmap");
-	print $fh qq(setxkbmap -rules evdev -layout \"$xlayoutstr\" -variant \"$xvariantstr\");
-	close($fh);
-	chmod(0744, $path_xkbdmap);
-	# Autostart gxkb if multiple keyboard layouts were set.
-	if (split(/,/, $xlayoutstr) > 1) {
-		my $cmd = qq(su -l $cfg_username -c 'echo gxkb | dsbautostart -c');
-		system($cmd);
-	}
 	# Make user the owner of all the files under /home/username
 	system("chown -R $cfg_username:$cfg_username /home/$cfg_username");
 }
@@ -506,7 +463,6 @@ sub commit {
 		$cfg_name		   = $1 if (/^cfg_name\s*=\s*(.*)/);
 		$cfg_username	   = $1 if (/^cfg_username\s*=\s*(.*)/);
 		$cfg_locale		   = $1 if (/^cfg_locale\s*=\s*(.*)/);
-		$cfg_fm		   	   = $1 if (/^cfg_file_manager\s*=\s*(.*)/);
 		$cfg_shell		   = $1 if (/^cfg_shell\s*=\s*(.*)/);
 		$cfg_password	   = $1 if (/^cfg_password\s*=\s*(.*)/);
 		$cfg_editor		   = $1 if (/^cfg_editor\s*=\s*(.*)/);
@@ -575,7 +531,6 @@ sub usage {
 		  "               without doing anything\n" .
 		  "COMMANDS\n" .
 		  "locales        Print list of locales\n" .
-		  "filemanagers   Print a list of file managers\n" .
 		  "editors        Print a list of editors\n" .
 		  "commit         Read configuration from stdin, and apply it\n";
 	exit 0;
@@ -667,10 +622,6 @@ while (@ARGV) {
 		remove_not_installed(\@mailclient_list);
 		print_array_data(\@mailclient_list);
 		exit 0;
-	} elsif ($ARGV[0] eq "filemanagers") {
-		remove_not_installed(\@file_manager_list);
-		print_array_data(\@file_manager_list);
-		exit 0;
 	} elsif ($ARGV[0] eq "shells") {
 		remove_not_installed(\@shell_list);
 		print_array_data(\@shell_list);
@@ -678,10 +629,6 @@ while (@ARGV) {
 	} elsif ($ARGV[0] eq "editors") {
 		remove_not_installed(\@editor_list);
 		print_array_data(\@editor_list);
-		exit 0;
-	} elsif ($ARGV[0] eq "filemanagers") {
-		remove_not_installed(\@file_manager_list);
-		print_array_data(\@file_manager_list);
 		exit 0;
 	} elsif ($ARGV[0] eq "commit") {
 		commit();

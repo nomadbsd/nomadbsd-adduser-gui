@@ -54,7 +54,6 @@ static QString cfg_password;
 static QString cfg_editor;
 static QString cfg_email_client;
 static QString cfg_browser;
-static QString cfg_file_manager;
 //////////////////////////////////////////////////////////////////////////////
 
 static QTranslator translator;
@@ -322,7 +321,6 @@ ProgramsPage::ProgramsPage(QWidget *parent) : QWizardPage(parent)
 	} apps[ncats] = {
 		{ BACKEND_GET_SHELLS,	    &cfg_shell,        &shells       },
 		{ BACKEND_GET_EDITORS,      &cfg_editor,       &editors      },
-		{ BACKEND_GET_FILEMANAGERS, &cfg_file_manager, &fileManagers },
 		{ BACKEND_GET_EMAILCLIENTS, &cfg_email_client, &emailClients },
 		{ BACKEND_GET_BROWSERS,	    &cfg_browser,      &browsers     }
 	};
@@ -389,7 +387,7 @@ ProgramsPage::ProgramsPage(QWidget *parent) : QWizardPage(parent)
 void ProgramsPage::initializePage()
 {
 	QString label[ncats] = {
-		tr("Shell"), tr("Editor"), tr("File manager"),
+		tr("Shell"), tr("Editor"),
 		tr("Mail client"), tr("Web browser")
 	};
 	for (int n = 0; n < ncats; n++)
@@ -406,7 +404,6 @@ void ProgramsPage::selectionChanged(int /* unused */)
 {
 	cfg_shell	 = getBoxVal(shells);
 	cfg_editor	 = getBoxVal(editors);
-	cfg_file_manager = getBoxVal(fileManagers);
 	cfg_browser	 = getBoxVal(browsers);
 	cfg_email_client = getBoxVal(emailClients);
 }
@@ -448,7 +445,6 @@ void SummaryPage::initializePage()
 		{ tr("Locale:"),			cfg_localedescr	   },
 		{ tr("Shell:"),				cfg_shell	   },
 		{ tr("Editor:"),			cfg_editor	   },
-		{ tr("File manager:"),			cfg_file_manager   },
 		{ tr("Mail client:"),			cfg_email_client   },
 		{ tr("Web browser:"),			cfg_browser	   }
 	};
@@ -499,9 +495,8 @@ void CommitPage::initializePage()
 		{ "cfg_password",	cfg_password	  },
 		{ "cfg_shell",		cfg_shell	  },
 		{ "cfg_editor",		cfg_editor	  },
-		{ "cfg_file_manager",	cfg_file_manager  },
 		{ "cfg_email_client",	cfg_email_client  },
-		{ "cfg_browser",	cfg_browser	  },
+		{ "cfg_browser",	cfg_browser	  }
 	};
 	proc.setReadChannel(QProcess::StandardOutput);
 	proc.start(BACKEND_COMMIT);
