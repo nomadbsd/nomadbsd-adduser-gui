@@ -1,0 +1,7 @@
+#ifndef DEFS_H
+#define DEFS_H
+#define PROGRAM "@CMAKE_PROJECT_NAME@"
+#define PATH_BACKEND "@PATH_BACKEND@"
+#define PATH_NOMADBSD_ADDUSER "@PATH_BACKEND@"
+#endif /* !DEFS_H */
+

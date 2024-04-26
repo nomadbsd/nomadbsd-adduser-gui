@@ -117,21 +117,21 @@ UsernamePage::UsernamePage(QWidget *parent) : QWizardPage(parent)
 	QLabel	    *nlabel = new QLabel;
 	QVBoxLayout *layout = new QVBoxLayout;
 	QFormLayout *form  = new QFormLayout;
-	QRegExp	    uchars  = QRegExp("[a-z]+");
-	QRegExp	    nchars  = QRegExp("[^:,]+");
+	QRegularExpression uchars("[a-z]+");
+	QRegularExpression nchars("[^:,]+");
 	namele		    = new QLineEdit;
 	usernamele	    = new QLineEdit;
 	status		    = new QLabel;
 
 	nlabel->setText(tr("Full name:"));
 	namele->setMaxLength(32);
-	namele->setValidator(new QRegExpValidator(nchars));
+	namele->setValidator(new QRegularExpressionValidator(nchars));
 	form->addRow(nlabel, namele);
 
 	readUsernames();
 	ulabel->setText(tr("Username:"));
 	usernamele->setMaxLength(16);
-	usernamele->setValidator(new QRegExpValidator(uchars));
+	usernamele->setValidator(new QRegularExpressionValidator(uchars));
 	form->addRow(ulabel, usernamele);
 
 	status->setStyleSheet("color: red;");	
@@ -212,7 +212,7 @@ LocalePage::LocalePage(QWidget *parent) : QWizardPage(parent)
 	QByteArray  line;
 
   	proc.setReadChannel(QProcess::StandardOutput);
-	proc.start(BACKEND_GET_LOCALES);
+	proc.startCommand(BACKEND_GET_LOCALES);
 	(void)proc.waitForStarted(-1);
 
 	//
@@ -336,7 +336,7 @@ ProgramsPage::ProgramsPage(QWidget *parent) : QWizardPage(parent)
 
 		*apps[n].box = new QComboBox;
 		proc.setReadChannel(QProcess::StandardOutput);
-		proc.start(apps[n].command);
+		proc.startCommand(apps[n].command);
 
 		(void)proc.waitForStarted(-1);
 		//
@@ -499,7 +499,7 @@ void CommitPage::initializePage()
 		{ "cfg_browser",	cfg_browser	  }
 	};
 	proc.setReadChannel(QProcess::StandardOutput);
-	proc.start(BACKEND_COMMIT);
+	proc.startCommand(BACKEND_COMMIT);
 	(void)proc.waitForStarted(-1);
 
 	//
