@@ -445,6 +445,8 @@ sub desktopsettings {
 		$cfg_xkbdlayouts[$i] = "$xkbdlayouts[$i]\t$xkbdvariants[$i]"
 	}
 	configure_ibus();
+	# Create a symlink for the ~/.cache directory.
+	system("ln -s /tmp/$cfg_username/cache /home/$cfg_username/.cache");
 	# Make user the owner of all the files under /home/username
 	system("chown -R $cfg_username:$cfg_username /home/$cfg_username");
 }
